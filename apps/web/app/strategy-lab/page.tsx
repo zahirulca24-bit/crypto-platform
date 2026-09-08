@@ -1,0 +1,3 @@
+"use client"
+import { RemoteCollectionPage } from "@/components/remote-collection"
+export default function StrategyLabPage(){return <RemoteCollectionPage title="Strategy Lab" subtitle="Deterministic research hypotheses. These are research candidates only and do not modify executable strategies." endpoint="/v1/research/hypotheses" emptyMessage="No hypotheses have been generated." columns={[{key:"hypothesis_type",label:"Type"},{key:"title",label:"Title"},{key:"status",label:"Status"},{key:"strategy_name",label:"Strategy"},{key:"symbol",label:"Symbol"},{key:"regime",label:"Regime"},{key:"confidence_score",label:"Confidence"},{key:"priority_score",label:"Priority"},{key:"sample_size",label:"Sample"}]}/>}

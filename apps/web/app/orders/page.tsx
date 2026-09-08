@@ -1,0 +1,3 @@
+"use client"
+import { RemoteCollectionPage } from "@/components/remote-collection"
+export default function OrdersPage(){return <RemoteCollectionPage title="Orders" subtitle="Persisted demo orders from the Phase-2 order store. The page is read-only." endpoint="/v1/orders" emptyMessage="No orders have been persisted." columns={[{key:"symbol",label:"Symbol"},{key:"side",label:"Side"},{key:"type",label:"Type"},{key:"quantity",label:"Quantity"},{key:"price",label:"Price"},{key:"filled_quantity",label:"Filled"},{key:"fee",label:"Fee"},{key:"status",label:"Status"},{key:"created_at",label:"Created"}]}/>}

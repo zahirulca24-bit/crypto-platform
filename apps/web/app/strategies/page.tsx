@@ -1,0 +1,3 @@
+"use client"
+import { RemoteCollectionPage } from "@/components/remote-collection"
+export default function StrategiesPage(){return <RemoteCollectionPage title="Strategies" subtitle="Persisted strategy decisions from the current backend. This page does not alter strategy configuration." endpoint="/v1/strategies/decisions" emptyMessage="No strategy decisions have been persisted." columns={[{key:"strategy_name",label:"Strategy"},{key:"strategy_version",label:"Version"},{key:"symbol",label:"Symbol"},{key:"timeframe",label:"Timeframe"},{key:"decision",label:"Decision"},{key:"reason",label:"Reason"},{key:"created_at",label:"Created"}]}/>}

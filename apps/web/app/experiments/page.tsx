@@ -1,0 +1,3 @@
+"use client"
+import { RemoteCollectionPage } from "@/components/remote-collection"
+export default function ExperimentsPage(){return <RemoteCollectionPage title="Experiments" subtitle="Historical replay and hypothesis experiment results. A passed experiment does not activate a strategy." endpoint="/v1/research/experiments" emptyMessage="No research experiments have been run." columns={[{key:"experiment_type",label:"Type"},{key:"status",label:"Status"},{key:"strategy_name",label:"Strategy"},{key:"symbol",label:"Symbol"},{key:"sample_size",label:"Sample"},{key:"score",label:"Score"},{key:"stability_score",label:"Stability"},{key:"data_quality_score",label:"Data Quality"},{key:"passed",label:"Passed"},{key:"completed_at",label:"Completed"}]}/>}

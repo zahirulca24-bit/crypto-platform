@@ -1,0 +1,3 @@
+"use client"
+import { RemoteCollectionPage } from "@/components/remote-collection"
+export default function PositionsPage(){return <RemoteCollectionPage title="Positions" subtitle="Authoritative Phase-2 position state. No mock positions are shown." endpoint="/v1/positions" emptyMessage="No positions are currently persisted." columns={[{key:"symbol",label:"Symbol"},{key:"side",label:"Side"},{key:"quantity",label:"Quantity"},{key:"average_entry_price",label:"Entry"},{key:"current_price",label:"Current"},{key:"realized_pnl",label:"Realized PnL"},{key:"unrealized_pnl",label:"Unrealized PnL"},{key:"fees",label:"Fees"},{key:"status",label:"Status"}]}/>}

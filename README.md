@@ -344,3 +344,37 @@ To stop containers and remove named volumes (resets database and cache):
 ```bash
 docker compose down -v
 ```
+
+## FRONTEND-WIRING-FIX-01 — Futuristic Frontend Restored + Backend/R&D Wiring
+
+**Date:** 08 Sep 2026
+
+`apps/web` is the canonical frontend. The previous placeholder Next.js page was replaced by the supplied futuristic multi-page dashboard, while `apps/api`, Phase-2/Phase-3 logic, migrations, workers, Docker services, `VERSION`, `start.bat`, `build-launcher.bat`, and `tools/windows-launcher/` remain from the latest project state.
+
+### Frontend URLs and API configuration
+
+- Local frontend: `http://localhost:3000`
+- Local backend default: `http://localhost:8000`
+- Central frontend API client: `apps/web/lib/api.ts`
+- Configuration variable: `NEXT_PUBLIC_API_BASE_URL`
+- Render/production example: `NEXT_PUBLIC_API_BASE_URL=https://<render-api-host>`
+
+The frontend does not hard-code a Render hostname. Docker passes `NEXT_PUBLIC_API_BASE_URL` into the web image build so the browser bundle uses the configured API origin.
+
+### Trading page wiring
+
+The restored Dashboard, Market, Symbol Selection, Strategies, Bots, Orders, Positions, Performance, and Logs screens use the existing backend APIs where those APIs exist. When persisted data is empty or the backend is unavailable, the UI displays loading/empty/error states rather than invented positive trading data. Bot screens are read-oriented; no trading command is fired automatically.
+
+### Phase-3 R&D wiring
+
+Research Overview, Market Regimes, Strategy Lab, Experiments, Learning Journal, and Candidate Strategies consume the current `/v1/research/*` APIs, including overview, pipeline/health, regimes, hypotheses, experiments, learning journal, candidates, promotion evaluations, and existing lineage-ready backend data. `approved_for_demo` remains research governance approval only and does not activate a bot or submit an order.
+
+### Docker web service and CORS
+
+`docker-compose.yml` continues to build the web service from `./apps/web`, exposes port `3000`, and supplies `NEXT_PUBLIC_API_BASE_URL`. Backend CORS remains configurable through `CORS_ALLOW_ORIGINS`; its safe local default includes `http://localhost:3000` rather than using wildcard CORS.
+
+### Known issues / build notes
+
+The supplied futuristic frontend originated from Windows and bundled a Windows-only Next.js SWC native package. In the agent Linux sandbox, `next build` could not download the Linux SWC binary because outbound npm resolution was unavailable. The bundled TypeScript compiler (`tsc --noEmit`) completed successfully. A normal `npm ci && npm run build` should be rerun in the intended local/Docker environment, where the Linux container installs its own platform-correct dependencies.
+
+The launcher/updater does not change trading safety rules and does not activate Live trading.
