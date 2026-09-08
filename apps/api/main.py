@@ -12,6 +12,7 @@ from routers.demo_exchange import router as demo_exchange_router
 from routers.symbol_selection import router as symbol_selection_router
 from routers.strategies import router as strategies_router
 from routers.phase2 import router as phase2_router
+from routers.research import router as research_router
 
 app = FastAPI(
     title="Adaptive Crypto Trading Platform API",
@@ -23,7 +24,7 @@ app.add_middleware(
     CORSMiddleware,
     allow_origins=[origin for origin in os.getenv("CORS_ALLOW_ORIGINS", "http://localhost:3000,http://localhost:3001").split(",") if origin],
     allow_credentials=False,
-    allow_methods=["GET", "POST"],
+    allow_methods=["GET", "POST", "PATCH"],
     allow_headers=["Content-Type"],
 )
 
@@ -33,6 +34,7 @@ app.include_router(demo_exchange_router)
 app.include_router(symbol_selection_router)
 app.include_router(strategies_router)
 app.include_router(phase2_router)
+app.include_router(research_router)
 
 
 @app.get("/health")

@@ -1,0 +1,9 @@
+{
+  "frontend_url": "http://localhost:3000",
+  "backend_health_url": "http://localhost:8000/health",
+  "docker_compose_file": "docker-compose.yml",
+  "update_manifest_url": "",
+  "update_check_enabled": true,
+  "startup_timeout_seconds": 180,
+  "http_timeout_seconds": 10
+}

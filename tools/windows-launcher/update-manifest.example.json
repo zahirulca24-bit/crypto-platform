@@ -1,0 +1,7 @@
+{
+  "version": "0.3.1",
+  "download_url": "https://github.com/OWNER/REPOSITORY/releases/download/v0.3.1/crypto-platform-v0.3.1.zip",
+  "sha256": "REPLACE_WITH_64_HEX_SHA256_DIGEST",
+  "release_notes": "Example only. Configure real release URLs before publishing.",
+  "mandatory": false
+}

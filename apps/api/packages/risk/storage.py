@@ -6,6 +6,8 @@ from sqlalchemy import select
 
 from .models import RiskDecision
 from models import RiskDecisionModel
+from packages.research.models import ObservationCreate
+from packages.research.service import observe_best_effort
 
 class RiskDecisionStore:
     def __init__(self, db: Session) -> None:
@@ -35,6 +37,23 @@ class RiskDecisionStore:
         )
         self.db.add(model)
         self.db.commit()
+        observe_best_effort(self.db, ObservationCreate(
+            event_type="risk.approved" if decision.approved else "risk.rejected",
+            source="risk_engine",
+            symbol=decision.proposal.symbol,
+            price=decision.proposal.price,
+            side=decision.proposal.action.value,
+            quantity=decision.approved_quantity,
+            notional=decision.approved_notional,
+            stop_loss=decision.proposal.stop_price,
+            risk_approved=decision.approved,
+            risk_rejection_reasons=decision.rejection_reasons,
+            decision_context={
+                "risk_decision_id": str(decision.id),
+                "policy_snapshot": decision.policy_snapshot,
+                "risk_amount": str(decision.risk_amount) if decision.risk_amount is not None else None,
+            },
+        ))
         return decision
 
     def list(self, limit: int = 100, offset: int = 0) -> list[RiskDecision]:

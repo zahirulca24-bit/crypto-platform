@@ -47,6 +47,8 @@ from sqlalchemy.orm import Session
 
 from exchange.adapter import CCXTMarketDataAdapter
 from models import SymbolSelectionRun, SymbolSelectionResult
+from packages.research.models import ObservationCreate
+from packages.research.service import observe_best_effort
 from schemas import (
     SymbolSelectionRequest,
     SymbolSelectionResponse,
@@ -497,6 +499,29 @@ def run_symbol_selection(
         ))
 
     db.commit()
+
+    # R&D observes the already-persisted authoritative selection results.
+    for item in all_result_items:
+        observe_best_effort(db, ObservationCreate(
+            event_type="symbol.selected" if item.selected else "symbol.rejected",
+            source="symbol_selection",
+            exchange=request.exchange,
+            symbol=item.symbol,
+            timeframe="1h",
+            price=Decimal(str(item.metrics.last_price)) if item.metrics.last_price is not None else None,
+            volume=Decimal(str(item.metrics.quote_volume_24h)) if item.metrics.quote_volume_24h is not None else None,
+            spread=Decimal(str(item.metrics.spread_pct)) if item.metrics.spread_pct is not None else None,
+            volatility=Decimal(str(item.metrics.volatility)) if item.metrics.volatility is not None else None,
+            selection_score=Decimal(str(item.score)) if item.score is not None else None,
+            selection_status="selected" if item.selected else "rejected",
+            selection_reasons=item.rejection_reasons,
+            market_context={
+                "selection_run_id": str(run_id),
+                "raw_metrics": item.metrics.model_dump(mode="json"),
+                "normalized_metrics": item.normalized_metrics.model_dump(mode="json"),
+                "score_components": item.score_components.model_dump(mode="json"),
+            },
+        ))
 
     return SymbolSelectionResponse(
         run_id=str(run_id),

@@ -41,3 +41,9 @@ Thumbs.db
 *.seed
 .coverage
 .pytest_cache/
+# Windows launcher local/generated state
+launcher-config.json
+.launcher-build-venv/
+.launcher-backups/
+.launcher-update-pending/
+

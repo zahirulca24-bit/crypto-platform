@@ -9,6 +9,8 @@ from sqlalchemy.dialects.postgresql import insert
 
 from .models import PositionProtection
 from models import PositionProtectionModel
+from packages.research.models import ObservationCreate
+from packages.research.service import observe_best_effort
 
 class ProtectionStore:
     def __init__(self, db: Session) -> None:
@@ -35,6 +37,21 @@ class ProtectionStore:
         )
         self.db.execute(stmt)
         self.db.commit()
+        observe_best_effort(self.db, ObservationCreate(
+            event_type="protection.status",
+            source="protection_service",
+            exchange="demo",
+            take_profit=protection.tp_price,
+            stop_loss=protection.sl_price,
+            protection_status=protection.protection_status.value,
+            reconciliation_context={
+                "position_id": str(protection.position_id),
+                "tp_order_id": protection.tp_order_id,
+                "sl_order_id": protection.sl_order_id,
+                "last_verified_at": protection.last_verified_at.isoformat() if protection.last_verified_at else None,
+            },
+            error_context={"reason": protection.error_reason} if protection.error_reason else None,
+        ))
         return protection
 
     def list(self, limit: int = 100, offset: int = 0) -> list[PositionProtection]:

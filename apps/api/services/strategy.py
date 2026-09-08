@@ -6,6 +6,8 @@ from sqlalchemy import select
 from models import StrategyDecision, OHLCVCandle
 from schemas import StrategyEvaluateRequest, StrategyDecisionResponse
 from strategies import RSITransitionStrategy, MACDCrossoverStrategy, MACrossoverStrategy
+from packages.research.models import ObservationCreate
+from packages.research.service import observe_best_effort
 
 STRATEGIES = {
     'rsi_transition': RSITransitionStrategy,
@@ -92,6 +94,23 @@ def evaluate_strategy(request: StrategyEvaluateRequest, strategy_name: str, conf
     db.add(db_decision)
     db.commit()
     db.refresh(db_decision)
+    observe_best_effort(db, ObservationCreate(
+        event_type="strategy.decision",
+        source="strategy",
+        exchange=db_decision.exchange,
+        symbol=db_decision.symbol,
+        timeframe=db_decision.timeframe,
+        strategy_name=db_decision.strategy_name,
+        strategy_version=db_decision.strategy_version,
+        strategy_config_hash=db_decision.configuration_hash,
+        candle_open_time=db_decision.candle_open_time,
+        price=latest_candle.close,
+        volume=latest_candle.volume,
+        indicator_values=db_decision.indicator_values,
+        strategy_decision=db_decision.decision,
+        strategy_reason=db_decision.reason,
+        decision_context={"proposal": db_decision.proposal, "configuration": db_decision.configuration},
+    ))
     return db_decision
 
 def get_decisions(db: Session, limit: int = 100):

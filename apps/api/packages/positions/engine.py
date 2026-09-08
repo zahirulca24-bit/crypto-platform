@@ -7,6 +7,8 @@ from decimal import Decimal
 from packages.exchange.models import DemoOrder, OrderStatus
 
 from .models import PortfolioSummary, Position, PositionSide, PositionStatus
+from packages.research.models import ObservationCreate
+from packages.research.service import observe_best_effort
 
 
 ZERO = Decimal("0")
@@ -21,6 +23,7 @@ class PositionEngine:
             raise ValueError("Only filled demo orders with a positive filled quantity affect positions")
 
         existing = self.store.get_open_for_symbol(order.symbol)
+        previous_realized = existing.realized_pnl if existing is not None else ZERO
         if existing is None:
             candidate = Position(
                 symbol=order.symbol,
@@ -40,7 +43,27 @@ class PositionEngine:
             if applied is None:  # pragma: no cover - impossible unless audit data was manually corrupted
                 raise RuntimeError("Fill was claimed without an associated position")
             return applied
-        return self.store.save(candidate)
+        saved = self.store.save(candidate)
+        observe_best_effort(self.store.db, ObservationCreate(
+            event_type="trade.completed" if saved.status == PositionStatus.CLOSED else "position.updated",
+            source="position_engine",
+            exchange="demo",
+            symbol=saved.symbol,
+            side=saved.side.value,
+            entry_price=saved.average_entry_price,
+            exit_price=order.price if saved.status == PositionStatus.CLOSED else None,
+            price=saved.current_price,
+            quantity=order.filled_quantity,
+            notional=order.filled_quantity * order.price,
+            fees=order.fee,
+            realized_pnl=saved.realized_pnl - previous_realized,
+            unrealized_pnl=saved.unrealized_pnl,
+            holding_time_seconds=Decimal(str((saved.updated_at - saved.opened_at).total_seconds())) if saved.status == PositionStatus.CLOSED else None,
+            exit_reason="position_closed_by_fill" if saved.status == PositionStatus.CLOSED else None,
+            order_status=order.status.value,
+            trade_context={"position_id": str(saved.id), "order_id": str(order.id)},
+        ))
+        return saved
 
     @staticmethod
     def _apply(position: Position, order: DemoOrder) -> None:
