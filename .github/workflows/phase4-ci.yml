@@ -54,7 +54,7 @@ jobs:
       ENVIRONMENT: test
       GOOGLE_AI_API_KEY: ""
       AI_MONITOR_AUTO_QUEUE_RESEARCH: "false"
-      PYTHONPATH: ${{ github.workspace }}/apps/api:${{ github.workspace }}
+      PYTHONPATH: ${{ github.workspace }}/apps/api:${{ github.workspace }}/apps/api/tests:${{ github.workspace }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -86,7 +86,7 @@ jobs:
 
       - name: Run backend test suite
         working-directory: apps/api
-        run: pytest -q
+        run: pytest -q tests
 
   frontend:
     name: Frontend Build
