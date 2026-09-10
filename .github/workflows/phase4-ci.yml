@@ -1,0 +1,123 @@
+name: Phase 4 CI
+
+on:
+  push:
+    branches:
+      - phase-4
+  pull_request:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  backend:
+    name: Backend / PostgreSQL / Tests
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: crypto_platform_ci
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d crypto_platform_ci"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 10
+      redis:
+        image: redis:7
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      DATABASE_URL: postgresql://postgres:postgres@127.0.0.1:5432/crypto_platform_ci
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: crypto_platform_ci
+      POSTGRES_HOST: 127.0.0.1
+      POSTGRES_PORT: 5432
+      REDIS_HOST: 127.0.0.1
+      REDIS_PORT: 6379
+      CELERY_BROKER_URL: redis://127.0.0.1:6379/0
+      CELERY_RESULT_BACKEND: redis://127.0.0.1:6379/0
+      JWT_SECRET_KEY: ci_only_not_for_production_987654321
+      ENVIRONMENT: test
+      GOOGLE_AI_API_KEY: ""
+      AI_MONITOR_AUTO_QUEUE_RESEARCH: "false"
+      PYTHONPATH: ${{ github.workspace }}/apps/api:${{ github.workspace }}/apps/api/tests:${{ github.workspace }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: apps/api/requirements.txt
+
+      - name: Install backend dependencies
+        working-directory: apps/api
+        run: python -m pip install --upgrade pip && pip install -r requirements.txt
+
+      - name: Verify Alembic single head
+        working-directory: apps/api
+        run: |
+          alembic heads
+          test "$(alembic heads | grep -c '(head)')" -eq 1
+
+      - name: Fresh PostgreSQL migration zero to head
+        working-directory: apps/api
+        run: alembic upgrade head
+
+      - name: Verify current migration
+        working-directory: apps/api
+        run: alembic current
+
+      - name: Run backend test suite
+        working-directory: apps/api
+        run: pytest -q tests
+
+  frontend:
+    name: Frontend Build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: npm
+          cache-dependency-path: apps/web/package-lock.json
+
+      - name: Install frontend dependencies
+        working-directory: apps/web
+        run: npm ci
+
+      - name: Build frontend
+        working-directory: apps/web
+        env:
+          NEXT_PUBLIC_API_BASE_URL: http://localhost:8000
+        run: npm run build
+
+  compose:
+    name: Docker Compose Config
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Validate compose file
+        run: docker compose config -q

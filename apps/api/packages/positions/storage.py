@@ -15,7 +15,7 @@ class PositionStore:
         self.db = db
 
     def get(self, position_id: UUID | str) -> Position | None:
-        row = self.db.execute(select(PositionModel).where(PositionModel.id == str(position_id))).scalars().first()
+        row = self.db.execute(select(PositionModel).where(PositionModel.id == (position_id if isinstance(position_id, UUID) else UUID(str(position_id))))).scalars().first()
         if row: return Position.model_validate(row.position_json)
         return None
 
@@ -60,7 +60,7 @@ class PositionStore:
         return result.rowcount > 0
 
     def get_position_for_fill(self, order_id: UUID | str) -> Position | None:
-        row = self.db.execute(select(AppliedOrderFillModel).where(AppliedOrderFillModel.order_id == str(order_id))).scalars().first()
+        row = self.db.execute(select(AppliedOrderFillModel).where(AppliedOrderFillModel.order_id == (order_id if isinstance(order_id, UUID) else UUID(str(order_id))))).scalars().first()
         if row: return self.get(row.position_id)
         return None
 

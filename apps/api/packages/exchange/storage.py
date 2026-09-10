@@ -16,12 +16,12 @@ class DemoOrderStore:
         self.db = db
 
     def get(self, order_id: UUID | str) -> DemoOrder | None:
-        row = self.db.execute(select(DemoOrderModel).where(DemoOrderModel.id == str(order_id))).scalars().first()
+        row = self.db.execute(select(DemoOrderModel).where(DemoOrderModel.id == (order_id if isinstance(order_id, UUID) else UUID(str(order_id))))).scalars().first()
         if row: return DemoOrder.model_validate(row.order_json)
         return None
 
     def get_by_risk_decision(self, risk_decision_id: UUID | str) -> DemoOrder | None:
-        row = self.db.execute(select(DemoOrderModel).where(DemoOrderModel.risk_decision_id == str(risk_decision_id))).scalars().first()
+        row = self.db.execute(select(DemoOrderModel).where(DemoOrderModel.risk_decision_id == (risk_decision_id if isinstance(risk_decision_id, UUID) else UUID(str(risk_decision_id))))).scalars().first()
         if row: return DemoOrder.model_validate(row.order_json)
         return None
 
@@ -41,7 +41,7 @@ class DemoOrderStore:
 
     def update(self, order: DemoOrder) -> DemoOrder:
         order.updated_at = datetime.now(timezone.utc)
-        model = self.db.execute(select(DemoOrderModel).where(DemoOrderModel.id == str(order.id))).scalars().first()
+        model = self.db.execute(select(DemoOrderModel).where(DemoOrderModel.id == order.id)).scalars().first()
         if model:
             model.order_json = order.model_dump(mode='json')
             self.db.commit()

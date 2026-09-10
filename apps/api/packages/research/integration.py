@@ -5,7 +5,7 @@ from decimal import Decimal
 from typing import Any
 from uuid import UUID
 
-from sqlalchemy import func, select, text
+from sqlalchemy import func, select, text, inspect as sa_inspect
 from sqlalchemy.orm import Session
 
 from models import (
@@ -17,6 +17,7 @@ from models import (
     ResearchHypothesis,
     ResearchObservation,
     TradeOutcome,
+    AIStrategyBlueprint,
 )
 from packages.research.features import FEATURE_VERSION
 from packages.research.regimes import REGIME_VERSION
@@ -24,8 +25,11 @@ from packages.research.outcomes import OUTCOME_VERSION
 from packages.research.hypotheses import HYPOTHESIS_VERSION
 from packages.research.experiments import EXPERIMENT_VERSION
 from packages.research.candidates import CANDIDATE_VERSION, GATE_VERSION
+from packages.research.ai.schemas import PROPOSAL_VERSION, PROMPT_VERSION, ORCHESTRATOR_VERSION, REVIEW_VERSION, BLUEPRINT_VERSION, STRATEGY_DISCOVERY_PROMPT_VERSION
+from packages.research.ai.validation import VALIDATION_VERSION
+from packages.research.ai.evolution import GENERATION_VERSION as EVOLUTION_GENERATION_VERSION, COMPARISON_VERSION
 
-EXPECTED_MIGRATION_HEAD = "011_research_candidates"
+EXPECTED_MIGRATION_HEAD = "021_phase2_schema_compatibility"
 ZERO = Decimal("0")
 
 
@@ -173,7 +177,12 @@ class ResearchIntegrationService:
         tables = [
             "research_observations", "market_feature_snapshots", "market_regime_snapshots",
             "trade_outcomes", "research_hypotheses", "research_experiments",
-            "research_candidate_strategies", "candidate_promotion_evaluations",
+            "research_candidate_strategies", "candidate_promotion_evaluations", "ai_research_proposals",
+            "ai_research_runs", "ai_proposal_reviews", "ai_strategy_blueprints",
+            "strategy_regime_profiles", "research_strategy_portfolios",
+            "shadow_research_sessions", "shadow_research_trades", "research_candidate_handoffs",
+            "research_monitoring_policies", "research_trigger_events", "adaptive_research_jobs", "research_monitor_worker_status",
+            "demo_strategy_manifests", "strategy_runtime_compatibility_checks", "demo_runtime_releases",
         ]
         return {
             "status": "ok",
@@ -184,12 +193,85 @@ class ResearchIntegrationService:
                 "feature": FEATURE_VERSION, "regime": REGIME_VERSION, "outcome": OUTCOME_VERSION,
                 "hypothesis": HYPOTHESIS_VERSION, "experiment": EXPERIMENT_VERSION,
                 "candidate": CANDIDATE_VERSION, "promotion_gate": GATE_VERSION,
+                "ai_proposal": PROPOSAL_VERSION, "ai_prompt": PROMPT_VERSION,
+                "ai_orchestrator": ORCHESTRATOR_VERSION, "ai_review": REVIEW_VERSION,
+                "ai_blueprint": BLUEPRINT_VERSION, "ai_strategy_discovery_prompt": STRATEGY_DISCOVERY_PROMPT_VERSION,
+                "ai_blueprint_validation": VALIDATION_VERSION,
+                "ai_strategy_evolution": EVOLUTION_GENERATION_VERSION,
+                "ai_champion_challenger": COMPARISON_VERSION,
+                "ai_strategy_regime_profile": "1.0.0", "ai_research_portfolio": "1.0.0",
+                "ai_shadow_session": "1.0.0", "ai_candidate_handoff": "1.0.0",
+                "ai_monitor_policy": "1.0.0", "ai_monitor_trigger": "1.0.0", "ai_adaptive_research_job": "1.0.0",
+                "ai_demo_manifest": "1.0.0", "ai_runtime_compatibility": "1.0.0", "ai_demo_runtime_release": "1.0.0",
             },
             "expected_migration_head": EXPECTED_MIGRATION_HEAD,
             "postgresql_authoritative": True,
             "external_exchange_check_performed": False,
             "external_ai_required": False,
             "research_only": True,
+        }
+
+    def phase4_integration_health(self) -> dict[str, Any]:
+        """Safe integrated Phase-4 status; read-only and execution-free."""
+        database_connected = True
+        actual_head = None
+        head_error = None
+        try:
+            self.db.execute(text("SELECT 1"))
+            try:
+                actual_head = self.db.execute(text("SELECT version_num FROM alembic_version")).scalar_one_or_none()
+            except Exception as exc:
+                # Unit-test harnesses may not use Alembic; PostgreSQL runtime must.
+                head_error = exc.__class__.__name__
+                self.db.rollback()
+        except Exception as exc:
+            database_connected = False
+            head_error = exc.__class__.__name__
+            self.db.rollback()
+        required_tables = [
+            "strategy_decisions", "risk_decisions", "demo_orders", "positions", "applied_order_fills",
+            "position_protections", "bot_runtime_state", "bot_commands", "bot_journal",
+            "research_observations", "market_feature_snapshots", "market_regime_snapshots", "trade_outcomes",
+            "research_hypotheses", "research_experiments", "research_candidate_strategies", "candidate_promotion_evaluations",
+            "ai_research_proposals", "ai_research_runs", "ai_proposal_reviews", "ai_strategy_blueprints",
+            "blueprint_validation_runs", "blueprint_simulated_trades", "ai_strategy_variants", "ai_strategy_evolution_runs",
+            "champion_challenger_comparisons", "strategy_regime_profiles", "research_strategy_portfolios",
+            "shadow_research_sessions", "shadow_research_trades", "research_candidate_handoffs",
+            "research_monitoring_policies", "research_trigger_events", "adaptive_research_jobs", "research_monitor_worker_status",
+            "demo_strategy_manifests", "strategy_runtime_compatibility_checks", "demo_runtime_releases",
+        ]
+        try:
+            actual_tables = sorted(sa_inspect(self.db.connection()).get_table_names()) if database_connected else []
+        except Exception:
+            actual_tables = []
+        missing_tables = sorted(set(required_tables) - set(actual_tables)) if actual_tables else []
+        modules = {
+            "ai_provider": "packages.research.ai.provider",
+            "proposal_service": "packages.research.ai.service",
+            "orchestrator": "packages.research.ai.orchestrator",
+            "discovery": "packages.research.ai.discovery",
+            "validation": "packages.research.ai.validation",
+            "evolution": "packages.research.ai.evolution",
+            "matching": "packages.research.ai.matching",
+            "shadow": "packages.research.ai.shadow",
+            "monitoring": "packages.research.ai.monitoring",
+            "manifest_runtime_compatibility": "packages.research.ai.manifest",
+        }
+        import importlib.util
+        module_status = {name: importlib.util.find_spec(path) is not None for name, path in modules.items()}
+        return {
+            "status": "ok" if database_connected and all(module_status.values()) else "degraded",
+            "database_connected": database_connected,
+            "expected_migration_head": EXPECTED_MIGRATION_HEAD,
+            "actual_migration_head": actual_head,
+            "migration_head_matches": actual_head == EXPECTED_MIGRATION_HEAD if actual_head is not None else None,
+            "migration_head_error": head_error,
+            "modules": module_status,
+            "required_table_count": len(required_tables),
+            "missing_required_tables": missing_tables,
+            "postgresql_authoritative": True,
+            "trading_execution_authority": False,
+            "automatic_trading_activation": False,
         }
 
     def _count(self, model) -> int:
