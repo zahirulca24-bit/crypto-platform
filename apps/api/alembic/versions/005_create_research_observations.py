@@ -11,7 +11,7 @@ import sqlalchemy as sa
 from sqlalchemy.dialects import postgresql
 
 revision: str = '005_research_observations'
-down_revision: Union[str, None] = '004_sym_selection'
+down_revision: Union[str, None] = '004_phase2_authoritative'
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
 

@@ -54,7 +54,7 @@ class RuntimeStore:
 
     def complete(self, x):
         x.processed_at = datetime.now(timezone.utc)
-        model = self.db.execute(select(BotCommandModel).where(BotCommandModel.id == str(x.id))).scalars().first()
+        model = self.db.execute(select(BotCommandModel).where(BotCommandModel.id == x.id)).scalars().first()
         if model:
             model.command_json = x.model_dump(mode='json')
             self.db.commit()
