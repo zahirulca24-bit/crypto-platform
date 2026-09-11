@@ -1,4 +1,5 @@
-﻿"""
+from security_auth import current_principal
+"""
 Symbol Selection Router
 
 POST /v1/market-data/symbol-selection  → run a selection scan
@@ -12,7 +13,7 @@ from database import get_db
 from schemas import SymbolSelectionRequest, SymbolSelectionResponse
 from services.symbol_selection import run_symbol_selection, get_run_by_id
 
-router = APIRouter(prefix="/v1/market-data", tags=["Symbol Selection"])
+router = APIRouter(prefix="/v1/market-data", tags=["Symbol Selection"], dependencies=[Depends(current_principal)])
 
 
 @router.post(

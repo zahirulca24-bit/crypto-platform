@@ -1,3 +1,4 @@
+from security_auth import current_principal
 from datetime import datetime
 from uuid import UUID
 
@@ -8,7 +9,7 @@ from database import get_db
 from packages.research.models import ObservationRead, ResearchSummary
 from packages.research.service import ResearchObservationService
 
-router = APIRouter(prefix="/v1/research", tags=["Research"])
+router = APIRouter(prefix="/v1/research", tags=["Research"], dependencies=[Depends(current_principal)])
 
 
 def get_research_service(db: Session = Depends(get_db)) -> ResearchObservationService:
