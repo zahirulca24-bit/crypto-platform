@@ -1,3 +1,4 @@
+from security_auth import current_principal
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
 from uuid import UUID
@@ -23,7 +24,7 @@ from packages.runtime.models import BotCommand, BotCommandRequest, BotRuntimeSta
 from packages.runtime.service import BotRuntime
 from packages.runtime.storage import RuntimeStore
 
-router = APIRouter(tags=['Phase 2 Integration'])
+router = APIRouter(tags=['Phase 2 Integration'], dependencies=[Depends(current_principal)])
 
 def get_risk_engine(db: Session = Depends(get_db)):
     return RiskEngine(RiskDecisionStore(db))

@@ -1,11 +1,12 @@
-﻿from fastapi import APIRouter, Depends, HTTPException, status
+from security_auth import current_principal
+from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 from typing import List
 from database import get_db
 from schemas import StrategyEvaluateRequest, StrategyDecisionResponse
 from services.strategy import evaluate_strategy, get_decisions
 
-router = APIRouter(prefix='/v1/strategies', tags=['Strategies'])
+router = APIRouter(prefix='/v1/strategies', tags=['Strategies'], dependencies=[Depends(current_principal)])
 
 @router.post('/evaluate', response_model=StrategyDecisionResponse)
 def evaluate(request: StrategyEvaluateRequest, strategy_name: str, config: dict, db: Session = Depends(get_db)):

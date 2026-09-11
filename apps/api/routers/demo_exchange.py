@@ -1,5 +1,6 @@
+from security_auth import current_principal
 from typing import Optional
-from fastapi import APIRouter, HTTPException, status, Body
+from fastapi import Depends, APIRouter, HTTPException, status, Body
 
 from schemas import (
     DemoExchangeVerifyRequest,
@@ -11,7 +12,7 @@ from services.demo_exchange import (
     get_demo_account_summary_service,
 )
 
-router = APIRouter(prefix="/v1/exchange/demo", tags=["Demo Exchange"])
+router = APIRouter(prefix="/v1/exchange/demo", tags=["Demo Exchange"], dependencies=[Depends(current_principal)])
 
 
 @router.post(
