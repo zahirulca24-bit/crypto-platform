@@ -1,5 +1,22 @@
 export const API_BASE_URL = (process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8000").replace(/\/$/, "")
 
+const SESSION_KEY = "crypto_session_token"
+
+export function getSessionToken(): string | null {
+  if (typeof window === "undefined") return null
+  return sessionStorage.getItem(SESSION_KEY)
+}
+
+export function setSessionToken(token: string): void {
+  if (typeof window === "undefined") return
+  sessionStorage.setItem(SESSION_KEY, token)
+}
+
+export function clearSessionToken(): void {
+  if (typeof window === "undefined") return
+  sessionStorage.removeItem(SESSION_KEY)
+}
+
 export class ApiError extends Error {
   status: number
   detail?: unknown
@@ -23,11 +40,15 @@ export function withQuery(path: string, params: Record<string, QueryValue> = {})
 
 export async function apiRequest<T>(path: string, init?: RequestInit): Promise<T> {
   const url = path.startsWith("http") ? path : `${API_BASE_URL}${path}`
+  const token = getSessionToken()
+  const authHeaders: Record<string, string> = token
+    ? { Authorization: `Bearer ${token}` }
+    : {}
   let response: Response
   try {
     response = await fetch(url, {
       ...init,
-      headers: { "Content-Type": "application/json", ...(init?.headers || {}) },
+      headers: { "Content-Type": "application/json", ...authHeaders, ...(init?.headers || {}) },
       cache: "no-store",
     })
   } catch (error) {
