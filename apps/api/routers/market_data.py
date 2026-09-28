@@ -1,3 +1,4 @@
+from security_auth import current_principal
 from typing import List
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy.orm import Session
@@ -12,7 +13,7 @@ from schemas import (
 )
 from services.market_data import sync_market_data
 
-router = APIRouter(prefix="/v1/market-data", tags=["market-data"])
+router = APIRouter(prefix="/v1/market-data", tags=["market-data"], dependencies=[Depends(current_principal)])
 
 
 @router.get("/ohlcv", response_model=List[OHLCVCandleResponse])

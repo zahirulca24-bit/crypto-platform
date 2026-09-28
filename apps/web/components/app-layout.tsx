@@ -3,12 +3,12 @@
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { useEffect, useRef, useState } from "react"
-import { Activity, BarChart3, Bot, BookOpen, Brain, FlaskConical, LayoutDashboard, LineChart, ListOrdered, Menu, Settings, Shield, Sparkles, TestTube2, X } from "lucide-react"
+import { Activity, BarChart3, Bot, BookOpen, Brain, FlaskConical, Gauge, KeyRound, LayoutDashboard, LineChart, ListOrdered, Menu, Settings, Shield, Sparkles, TestTube2, X } from "lucide-react"
 import { api } from "@/lib/api"
 
 const sections = [
   { label: "Trading", items: [
-    ["Dashboard", "/", LayoutDashboard], ["Market", "/market", LineChart], ["Symbol Selection", "/symbol-selection", Sparkles],
+    ["Dashboard", "/dashboard", LayoutDashboard], ["Market", "/market", LineChart], ["Symbol Selection", "/symbol-selection", Sparkles],
     ["Strategies", "/strategies", Brain], ["Bots", "/bots", Bot], ["Orders", "/orders", ListOrdered],
     ["Positions", "/positions", BarChart3], ["Performance", "/performance", Activity], ["Logs", "/logs", BookOpen],
   ]},
@@ -17,7 +17,7 @@ const sections = [
     ["Strategy Lab", "/strategy-lab", Brain], ["Experiments", "/experiments", TestTube2],
     ["Learning Journal", "/learning-journal", BookOpen], ["Candidate Strategies", "/candidate-strategies", Shield],
   ]},
-  { label: "System", items: [["System Status", "/system-status", Activity], ["Settings", "/settings", Settings]] },
+  { label: "System", items: [["Operations & Safety", "/operations", Gauge], ["System Status", "/system-status", Activity], ["Sign Out", "/login", KeyRound], ["Settings", "/settings", Settings]] },
 ] as const
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {
@@ -25,6 +25,17 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
   const [open, setOpen] = useState(true)
   const [apiOk, setApiOk] = useState<boolean | null>(null)
   const canvasRef = useRef<HTMLCanvasElement>(null)
+
+  useEffect(() => {
+    import("@/lib/api").then(({ getSessionToken, clearSessionToken }) => {
+      if (!getSessionToken()) {
+        window.location.href = "/login"
+      }
+      if (pathname === "/login") {
+        clearSessionToken()
+      }
+    })
+  }, [pathname])
 
   useEffect(() => {
     let alive = true
