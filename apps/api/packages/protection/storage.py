@@ -17,7 +17,7 @@ class ProtectionStore:
         self.db = db
 
     def get(self, position_id: UUID | str) -> PositionProtection | None:
-        row = self.db.execute(select(PositionProtectionModel).where(PositionProtectionModel.position_id == str(position_id))).scalars().first()
+        row = self.db.execute(select(PositionProtectionModel).where(PositionProtectionModel.position_id == (position_id if isinstance(position_id, UUID) else UUID(str(position_id))))).scalars().first()
         if row: return PositionProtection.model_validate(row.protection_json)
         return None
 

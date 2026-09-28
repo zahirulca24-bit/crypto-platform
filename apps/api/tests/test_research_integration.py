@@ -91,8 +91,8 @@ def test_lineage_invalid_and_missing(idb):
 def test_research_health_versions_and_migration_head(idb):
     data=ResearchIntegrationService(idb).health()
     assert data['status']=='ok' and data['postgresql_authoritative'] is True
-    assert data['expected_migration_head']=='011_research_candidates'==EXPECTED_MIGRATION_HEAD
-    assert set(data['versions'])=={'feature','regime','outcome','hypothesis','experiment','candidate','promotion_gate'}
+    assert data['expected_migration_head']=='021_phase2_schema_compatibility'==EXPECTED_MIGRATION_HEAD
+    assert set(data['versions'])=={'feature','regime','outcome','hypothesis','experiment','candidate','promotion_gate','ai_proposal','ai_prompt','ai_orchestrator','ai_review','ai_blueprint','ai_strategy_discovery_prompt','ai_blueprint_validation','ai_strategy_evolution','ai_champion_challenger','ai_strategy_regime_profile','ai_research_portfolio','ai_shadow_session','ai_candidate_handoff','ai_monitor_policy','ai_monitor_trigger','ai_adaptive_research_job','ai_demo_manifest','ai_runtime_compatibility','ai_demo_runtime_release'}
     assert data['external_exchange_check_performed'] is False and data['external_ai_required'] is False
 
 

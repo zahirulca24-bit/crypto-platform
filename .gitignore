@@ -41,9 +41,13 @@ Thumbs.db
 *.seed
 .coverage
 .pytest_cache/
+
+# Phase 4 local sync / accidental nested copies
+.p4sync/
+apps/api/alembic/versions/app/
+
 # Windows launcher local/generated state
 launcher-config.json
 .launcher-build-venv/
 .launcher-backups/
 .launcher-update-pending/
-

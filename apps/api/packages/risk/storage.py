@@ -1,6 +1,7 @@
 from __future__ import annotations
 import json
 from pathlib import Path
+from uuid import UUID
 from sqlalchemy.orm import Session
 from sqlalchemy import select
 
@@ -20,7 +21,7 @@ class RiskDecisionStore:
         return None
 
     def get(self, decision_id: str) -> RiskDecision | None:
-        row = self.db.execute(select(RiskDecisionModel).where(RiskDecisionModel.id == str(decision_id))).scalars().first()
+        row = self.db.execute(select(RiskDecisionModel).where(RiskDecisionModel.id == (decision_id if isinstance(decision_id, UUID) else UUID(str(decision_id))))).scalars().first()
         if row:
             return RiskDecision.model_validate(row.decision_json)
         return None

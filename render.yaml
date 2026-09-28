@@ -31,6 +31,112 @@ services:
         generateValue: true
       - key: ENVIRONMENT
         value: production
+      - key: GOOGLE_AI_API_KEY
+        sync: false
+      - key: GOOGLE_AI_MODEL
+        value: gemini-2.5-flash
+      - key: GOOGLE_AI_TEMPERATURE
+        value: "0.2"
+      - key: GOOGLE_AI_MAX_OUTPUT_TOKENS
+        value: "2048"
+      - key: GOOGLE_AI_TIMEOUT_SECONDS
+        value: "30"
+      - key: AI_RESEARCH_MAX_PROPOSALS_PER_RUN
+        value: "5"
+      - key: AI_BLUEPRINT_MIN_READINESS_SCORE
+        value: "0.65"
+      - key: AI_BLUEPRINT_MAX_PARAMETER_COMBINATIONS
+        value: "500"
+      - key: AI_BLUEPRINT_MAX_CONDITIONS
+        value: "20"
+      - key: AI_EVOLUTION_MAX_VARIANTS_PER_GENERATION
+        value: "10"
+      - key: AI_EVOLUTION_MAX_CHANGED_FIELDS
+        value: "3"
+      - key: AI_EVOLUTION_MAX_GENERATIONS_PER_REQUEST
+        value: "1"
+      - key: AI_EVOLUTION_MIN_CHALLENGER_IMPROVEMENT
+        value: "0.03"
+      - key: AI_MATCH_MIN_REGIME_TRADES
+        value: "10"
+      - key: AI_PORTFOLIO_MAX_COMPONENTS
+        value: "5"
+      - key: AI_PORTFOLIO_MAX_COMPONENT_WEIGHT
+        value: "0.40"
+      - key: AI_PORTFOLIO_MAX_PAIRWISE_CORRELATION
+        value: "0.85"
+      - key: AI_PORTFOLIO_MIN_READINESS_SCORE
+        value: "0.60"
+      - key: AI_SHADOW_MIN_TRADES
+        value: "10"
+      - key: AI_SHADOW_MIN_EXPECTANCY
+        value: "0"
+      - key: AI_SHADOW_MAX_DRAWDOWN
+        value: "1000"
+      - key: AI_SHADOW_MAX_DRIFT
+        value: "0.50"
+      - key: AI_SHADOW_MIN_DATA_QUALITY
+        value: "0.60"
+      - key: AI_SHADOW_MIN_READINESS_SCORE
+        value: "0.60"
+      - key: AI_SHADOW_MAX_CANDLES_PER_PROCESS
+        value: "250"
+      - key: AI_HANDOFF_REQUIRE_SHADOW
+        value: "false"
+      - key: AI_BACKTEST_FEE_BPS
+        value: "10"
+      - key: AI_BACKTEST_SLIPPAGE_BPS
+        value: "5"
+      - key: AI_BACKTEST_INTRABAR_CONFLICT_POLICY
+        value: stop_first
+      - key: AI_BACKTEST_FIXED_NOTIONAL
+        value: "1000"
+      - key: AI_VALIDATION_MIN_TRADES
+        value: "10"
+      - key: AI_VALIDATION_MIN_EXPECTANCY
+        value: "0"
+      - key: AI_VALIDATION_MIN_PROFIT_FACTOR
+        value: "1.05"
+      - key: AI_VALIDATION_MAX_DRAWDOWN
+        value: "20"
+      - key: AI_VALIDATION_MIN_STABILITY
+        value: "0.50"
+      - key: AI_VALIDATION_MIN_DATA_QUALITY
+        value: "0.60"
+      - key: AI_VALIDATION_MAX_OVERFIT_RISK
+        value: "0.65"
+      - key: AI_VALIDATION_MAX_EXECUTION_COST_DRAG
+        value: "0.60"
+      - key: AI_REVIEW_MIN_EVIDENCE_SCORE
+        value: "0.35"
+      - key: AI_REVIEW_MIN_TESTABILITY_SCORE
+        value: "0.45"
+      - key: AI_REVIEW_MIN_DATA_QUALITY_SCORE
+        value: "0.35"
+      - key: AI_REVIEW_MIN_OVERALL_SCORE
+        value: "0.50"
+      - key: AI_MONITOR_AUTO_QUEUE_RESEARCH
+        value: "false"
+      - key: AI_DEMO_MANIFEST_MIN_COMPATIBILITY_SCORE
+        value: "0.80"
+      - key: AI_DEMO_RELEASE_MIN_READINESS_SCORE
+        value: "0.75"
+      - key: AI_DEMO_RELEASE_BLOCK_SEVERE_TRIGGERS
+        value: "true"
+      - key: AI_MONITOR_DEFAULT_COOLDOWN_SECONDS
+        value: "21600"
+      - key: AI_MONITOR_MIN_SAMPLE_SIZE
+        value: "20"
+      - key: AI_MONITOR_MAX_POLICIES_PER_CYCLE
+        value: "50"
+      - key: AI_MONITOR_MAX_TRIGGERS_PER_CYCLE
+        value: "20"
+      - key: AI_MONITOR_MAX_JOBS_PER_CYCLE
+        value: "10"
+      - key: AI_MONITOR_POLL_SECONDS
+        value: "60"
+      - key: AI_MONITOR_MAX_JOB_RETRIES
+        value: "1"
 
   - type: worker
     name: crypto-platform-worker
@@ -54,6 +160,49 @@ services:
           type: keyvalue
           name: crypto-platform-redis
           property: connectionString
+
+  - type: worker
+    name: crypto-platform-research-monitor
+    runtime: python
+    plan: free
+    buildCommand: pip install -r apps/api/requirements.txt
+    startCommand: PYTHONPATH=apps/api python services/research-monitor-worker/main.py
+    envVars:
+      - key: DATABASE_URL
+        fromDatabase:
+          name: crypto-platform-db
+          property: connectionString
+      - key: REDIS_URL
+        fromService:
+          type: keyvalue
+          name: crypto-platform-redis
+          property: connectionString
+      - key: GOOGLE_AI_API_KEY
+        sync: false
+      - key: GOOGLE_AI_MODEL
+        value: gemini-2.5-flash
+      - key: GOOGLE_AI_TEMPERATURE
+        value: "0.2"
+      - key: GOOGLE_AI_MAX_OUTPUT_TOKENS
+        value: "2048"
+      - key: GOOGLE_AI_TIMEOUT_SECONDS
+        value: "30"
+      - key: AI_MONITOR_AUTO_QUEUE_RESEARCH
+        value: "false"
+      - key: AI_MONITOR_DEFAULT_COOLDOWN_SECONDS
+        value: "21600"
+      - key: AI_MONITOR_MIN_SAMPLE_SIZE
+        value: "20"
+      - key: AI_MONITOR_MAX_POLICIES_PER_CYCLE
+        value: "50"
+      - key: AI_MONITOR_MAX_TRIGGERS_PER_CYCLE
+        value: "20"
+      - key: AI_MONITOR_MAX_JOBS_PER_CYCLE
+        value: "10"
+      - key: AI_MONITOR_POLL_SECONDS
+        value: "60"
+      - key: AI_MONITOR_MAX_JOB_RETRIES
+        value: "1"
 
   - type: web
     name: crypto-platform-web
